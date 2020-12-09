@@ -36,29 +36,35 @@ class Solution(object):
         n=len(board)
         m=len(board[0])
         #click=[a,b]
+        print(type(click[0]))
+        print(type(click[1]))
+        print(type(board))
         if board[click[0]][click[1]]=='M':
           board[click[0]][click[1]]='X'
           return board
         else:
-          searching(click[0],click[1])
+          self.searching(click[0],click[1])
           return board
     def set_board(self,r,c,n):        
         board=[]
-        for rr in range(r+1):
+        for rr in range(r):
           board.append([])
-        random_list_x = random.sample(range(0, c+1), n)
-        random_list_y = random.sample(range(0,r+1),n) 
-        for rr in range(r+1):
-          for cc in range(c+1):
-            if rr in random_list_x and cc in random_list_y:
-              board[rr].append('M')
-            else:
-              board[rr].append('E')
+        M_dic={}
+        random_list_x = random.sample(range(0, c), n)
+        random_list_y = random.sample(range(0, r), n) 
+        for p in range(len(random_list_x)):
+            M_dic[random_list_x[p]]=random_list_y[p]
+        for rr in range(r):
+            for cc in range(c):
+                if rr in M_dic and M_dic[rr]==cc:
+                    board[rr].append('M')
+                else:
+                    board[rr].append('E')
         return board
     def start_game(self):
       row=16
       column=16
-      num_of_mines=40
+      num_of_mines=4
       board=self.set_board(row,column,num_of_mines)
       return board
     def play(self):
