@@ -1,5 +1,6 @@
 import random
 
+# set up the board, randomly placing the mines
 def set_board(r, c, n):
     board = []
     for rr in range(r):
@@ -28,6 +29,7 @@ class Solution:
         direction = ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (-1, -1), (1, -1))
         self.m, self.n = len(board), len(board[0])
 
+        # count the mines around certain position
         def check(i, j):
             cnt = 0
             for x, y in direction:
@@ -36,6 +38,7 @@ class Solution:
                     cnt += 1
             return cnt
 
+        # changing the states of posisitions without mines
         def dfs(i, j):
             cnt = check(i, j)
             if not cnt:
@@ -45,20 +48,23 @@ class Solution:
                     if 0 <= x < self.m and 0 <= y < self.n and board[x][y] == 'E': dfs(x, y)
             else:
                 board[i][j] = str(cnt)
-
-        # click=[a,b]
-        # 如果input标记而不是直接点击
+                
+        # placing a flag
         if click[2] == 0:
             self.numFlags -= 1
+            # if there is a mine, state changes to 'X'
             if board[click[0]][click[1]] == 'M':
                 board[click[0]][click[1]] = 'X'
             return board
+            # if there is not a mine, state doesn't change, but number of flags remaining declines
 
-        # 直接点击
+        # digging
         elif click[2] == 1:
+            # if there is a mine, game over
             if board[click[0]][click[1]] == 'M':
                 self.endGame = True
             else:
+                # change states for positions without mines
                 dfs(click[0], click[1])
                 return board
 
@@ -82,7 +88,7 @@ class Solution:
         else:
             self.play()
 
-
+# original settings
 row = 16
 column = 16
 num_of_mines = 16
