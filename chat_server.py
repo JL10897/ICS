@@ -9,6 +9,8 @@ import indexer
 import json
 import pickle as pkl
 from chat_utils import *
+from Single import *
+from single import Solution
 import chat_group as grp
 
 
@@ -129,7 +131,6 @@ class Server:
                 the_guys = self.group.list_me(from_name)
                 said2 = text_proc(msg["message"], from_name)
                 self.indices[from_name].add_msg_and_index(said2)
-
                 # ---- end of your code --- #
 
                 for g in the_guys[1:]:
@@ -140,7 +141,30 @@ class Server:
                     mysend(to_sock, json.dumps({"action":"exchange", "from":msg["from"], "message":msg["message"]}))
 
                     # ---- end of your code --- #
-
+            elif msg["action"] == 'playgame':
+                from_name=self.logged_name2sock[from_sock]
+                to_name=self.group.list_me(from_name)
+                #Finding user1 and user2 who play the game
+                row = 16
+                column = 16
+                num_of_mines = 16
+                Flags = num_of_mines
+                bo = set_board(row, column, num_of_mines)
+                #Setting up the game board for this round of game
+                
+                
+                '''接下来就是要发给两个user游戏进程的代码啦!'''
+                to_sock=from_name
+                #不需要indices
+                mysend(to_sock,json.dumps({"action":'playgame', "message":'Please input the [x,y,0:flag/ 1:dig] as a list'})
+            elif msg["action"] == 'gaming':
+                clicker=msg["message"]
+                a = Solution(bo, clicker,Flags)
+                # 第一个参数是生成好的board,第二个参数是从User那里收到的
+                a.play()
+                flag_num=a.get_flag()
+                mysend(to_sock,json.dumps({"action": '', "message": 'Number of Flags You Have:'+ flag_num}))
+                board_for_medium=
 # ==============================================================================
 # the "from" guy has had enough (talking to "to")!
 # ==============================================================================
@@ -184,7 +208,6 @@ class Server:
                 print('here:\n', poem)
 
                 # ---- end of your code --- #
-
                 mysend(from_sock, json.dumps(
                     {"action": "poem", "results": poem}))
 # ==============================================================================
