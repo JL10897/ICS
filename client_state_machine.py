@@ -1,10 +1,9 @@
-"""
-Created on Sun Apr  5 00:00:32 2015
 
-@author: zhengzhang
-"""
 from chat_utils import *
 import json
+from Single import Solution
+from Single import *
+from translate_board import *
 
 class ClientSM:
     def __init__(self, s):
@@ -12,7 +11,8 @@ class ClientSM:
         self.peer = ''
         self.me = ''
         self.out_msg = ''
-        self.s = s
+        self.s = s       # socket for the current client
+        self.play_once = None
 
     def set_state(self, state):
         self.state = state
@@ -49,6 +49,11 @@ class ClientSM:
         self.peer = ''
 
     def proc(self, my_msg, peer_msg):
+        """
+        :param my_msg:
+        :param peer_msg:
+        :return: self.out_msg: which will be displayed on the client side
+        """
         self.out_msg = ''
 #==============================================================================
 # Once logged in, do a few things: get peer listing, connect, search
@@ -113,14 +118,14 @@ class ClientSM:
                     return self.out_msg
 
                 if peer_msg["action"] == "connect":
-
                     # ----------your code here------#
-                    if self.connect_to(peer_msg['from']):
-                        self.state = S_CHATTING
-                        self.peer = peer_msg['from']
-                        self.out_msg += 'Request from ' + self.peer + '\n'
-                        self.out_msg += 'You are connected with ' + self.peer + '. Chat away!\n\n'
-                        self.out_msg += '-----------------------------------\n'
+                    print(peer_msg)
+                    self.peer = peer_msg["from"]
+                    self.out_msg += 'Request from ' + self.peer + '\n'
+                    self.out_msg += 'You are connected with ' + self.peer
+                    self.out_msg += '. Chat away!\n\n'
+                    self.out_msg += '------------------------------------\n'
+                    self.state = S_CHATTING
                     # ----------end of your code----#
 
 #==============================================================================
@@ -129,27 +134,56 @@ class ClientSM:
 #==============================================================================
         elif self.state == S_CHATTING:
             if len(my_msg) > 0:     # my stuff going out
+                if my_msg == 'g':
+                    row = 16
+                    column = 16
+                    num_of_mines = 16
+                    Flags = 16
+                    bo = set_board(row, column, num_of_mines)
+                    self.play_once = Solution(bo, Flags, [])
+                    board_translated = encrypted_board(self.play_once.get_board())
+                    my_msg += '\nCurrent Board Looks like this: \n'
+                    my_msg += '\n' + board_translated + '\n'
+                    my_msg += 'next player please input a clicker'
+                else:
+                    try:
+                        clicker = my_msg.split(',')
+                        my_msg += clicker
+                        '''for i in range(len(clicker)):
+                            clicker[i] = int(clicker[i])
+                        self.play_once.set_click(clicker)
+                        if self.play_once.get_game_status() == False:
+                            board_translated = encrypted_board(self.play_once.updateBoard())
+                            flags_left = self.play_once.get_flag()
+                            my_msg += "\nCurrent Board Looks like this: \n"
+                            my_msg += board_translated
+                            my_msg += "\nNumber of flags remained: " + flags_left
+                        else:
+                            my_msg += "\nGame Over!"'''
+                    except:
+                        my_msg += "\nINVALID INPUT"
+
                 mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":my_msg}))
                 if my_msg == 'bye':
                     self.disconnect()
                     self.state = S_LOGGEDIN
                     self.peer = ''
-            if len(peer_msg) > 0:    # peer's stuff, coming in
 
-
+            if len(peer_msg) > 0:  # peer's stuff, coming in
                 # ----------your code here------#
                 peer_msg = json.loads(peer_msg)
-                if peer_msg['action'] == 'disconnect':
+                if peer_msg["action"] == "connect":
+                    self.out_msg += "(" + peer_msg["from"] + " joined)\n"
+                elif peer_msg["action"] == "disconnect":
                     self.out_msg += peer_msg["message"]
                     self.state = S_LOGGEDIN
-                elif peer_msg['action'] == 'connect':
-                    self.out_msg += '(' + peer_msg['from'] + ' joined)\n'
-                elif peer_msg['action'] == 'exchange':
+                else:
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
-                # ----------end of your code----#
+                    #在这里加上游戏的return
 
-            # Display the menu again
+                # ----------end of your code----#
             if self.state == S_LOGGEDIN:
+                # Display the menu again
                 self.out_msg += menu
 #==============================================================================
 # invalid state
